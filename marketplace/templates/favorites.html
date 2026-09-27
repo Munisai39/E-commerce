@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Saved Favorites - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Saved Favorites</h1>
+      <p class="section-subtitle">Keep an eye on listings you're interested in purchasing</p>
+    </div>
+    <a href="{% url 'browse' %}" class="btn btn-outline btn-sm">Find More Items &rarr;</a>
+  </div>
+
+  {% if favorites %}
+    <div class="product-grid">
+      {% for fav in favorites %}
+        {% with item=fav.listing %}
+          <div class="product-card">
+            <div class="card-img-wrap">
+              {% if item.primary_image_url %}
+                <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="card-img" loading="lazy">
+              {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#64748b;">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+              {% endif %}
+
+              <span class="badge badge-primary card-badge-top-left">
+                {{ item.get_condition_display }}
+              </span>
+
+              <!-- Favorite remove button -->
+              <button type="button" class="card-fav-btn active"
+                      data-listing-id="{{ item.id }}"
+                      data-url="{% url 'toggle_favorite' item.id %}"
+                      title="Remove from favorites">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="card-body">
+              <div class="card-price-row">
+                <span class="card-price">{{ item.formatted_price }}</span>
+                {% if item.status == 'sold' %}
+                  <span class="badge badge-neutral">Sold</span>
+                {% else %}
+                  <span class="badge badge-neutral" style="font-size: 0.7rem;">{{ item.category.name }}</span>
+                {% endif %}
+              </div>
+
+              <h3 class="card-title">
+                <a href="{% url 'product_detail' item.id %}">{{ item.title }}</a>
+              </h3>
+
+              <div class="card-meta">
+                <span class="card-location">{{ item.location }}</span>
+                <span class="card-date">Saved {{ fav.created_at|timesince }} ago</span>
+              </div>
+            </div>
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon-box">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      </div>
+      <h3>Your Favorites List is Empty</h3>
+      <p>Save items you like while browsing so you can easily compare prices, contact sellers, or buy them later.</p>
+      <a href="{% url 'browse' %}" class="btn btn-primary">Start Exploring Listings</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

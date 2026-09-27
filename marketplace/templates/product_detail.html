@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ listing.title }} - MarketNest{% endblock %}
+{% block meta_description %}{{ listing.description|truncatewords:25 }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <!-- Breadcrumbs -->
+  <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+    <a href="{% url 'home' %}">Home</a> &rsaquo;
+    <a href="{% url 'browse' %}">Browse</a> &rsaquo;
+    <a href="{% url 'browse' %}?category={{ listing.category.slug }}">{{ listing.category.name }}</a> &rsaquo;
+    <span>{{ listing.title|truncatechars:40 }}</span>
+  </div>
+
+  <div class="detail-layout">
+
+    <!-- Left Column: Gallery & Description -->
+    <div>
+      <div class="gallery-container">
+        <!-- Main Image -->
+        <div class="main-image-wrap">
+          {% if listing.primary_image_url %}
+            <img src="{{ listing.primary_image_url }}" alt="{{ listing.title }}" id="mainProductImage" class="main-image">
+          {% else %}
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#64748b;">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Thumbnails Strip -->
+        {% if images|length > 1 %}
+          <div class="thumbnails-strip">
+            {% for img_obj in images %}
+              <div class="thumb-item {% if forloop.first %}active{% endif %}" data-full-img="{{ img_obj.image.url }}">
+                <img src="{{ img_obj.image.url }}" alt="{{ listing.title }} thumbnail {{ forloop.counter }}">
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Description Card -->
+      <div class="description-card">
+        <h3>Description</h3>
+        <div class="description-content">
+          {{ listing.description|linebreaksbr }}
+        </div>
+      </div>
+
+      <!-- Safety Tips -->
+      <div class="safety-tips-card">
+        <h4>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          MarketNest Safe Trading Tips
+        </h4>
+        <ul class="safety-tips-list">
+          <li>Meet the seller in person in a well-lit, public location.</li>
+          <li>Thoroughly inspect the item before paying or taking ownership.</li>
+          <li>Never send advance payments, deposits, or wire transfers.</li>
+          <li>Beware of unrealistic offers or sellers demanding payment outside MarketNest.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Column: Product Overview, Actions, Seller -->
+    <div>
+      <div class="detail-info-card">
+
+        <!-- Status & Category Badges -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 0.5rem;">
+            {% if listing.status == 'sold' %}
+              <span class="badge badge-neutral" style="background:#e2e8f0; color:#475569; font-weight:700;">SOLD OUT</span>
+            {% elif listing.status == 'pending' %}
+              <span class="badge badge-warning">SALE PENDING</span>
+            {% else %}
+              <span class="badge badge-success">ACTIVE LISTING</span>
+            {% endif %}
+
+            <span class="badge badge-primary">{{ listing.get_condition_display }}</span>
+          </div>
+
+          <span style="font-size: 0.8rem; color: var(--text-muted); display:flex; align-items:center; gap:0.25rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            {{ listing.views_count }} views
+          </span>
+        </div>
+
+        <div class="detail-price-row">
+          <div class="detail-price">{{ listing.formatted_price }}</div>
+
+          {% if user.is_authenticated and not is_owner %}
+            <button type="button" class="btn-icon btn-outline {% if is_favorited %}active{% endif %} btn-fav-toggle"
+                    data-listing-id="{{ listing.id }}"
+                    data-url="{% url 'toggle_favorite' listing.id %}"
+                    title="Save to favorites">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="{% if is_favorited %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" style="color: {% if is_favorited %}var(--danger){% else %}var(--text-muted){% endif %};">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+          {% endif %}
+        </div>
+
+        <h1 class="detail-title">{{ listing.title }}</h1>
+
+        <!-- Quick Spec Grid -->
+        <div class="detail-specs-grid">
+          <div class="spec-item">
+            <span class="spec-label">Category</span>
+            <span class="spec-value">{{ listing.category.name }}</span>
+          </div>
+          {% if listing.subcategory %}
+          <div class="spec-item">
+            <span class="spec-label">Subcategory</span>
+            <span class="spec-value">{{ listing.subcategory.name }}</span>
+          </div>
+          {% endif %}
+          <div class="spec-item">
+            <span class="spec-label">Location</span>
+            <span class="spec-value">{{ listing.location }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Posted</span>
+            <span class="spec-value">{{ listing.created_at|date:"M d, Y" }}</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons-group">
+          {% if is_owner %}
+            <!-- Owner Control Actions -->
+            <a href="{% url 'edit_listing' listing.id %}" class="btn btn-outline-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              <span>Edit My Listing</span>
+            </a>
+
+            <form action="{% url 'mark_sold' listing.id %}" method="POST" style="margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline" style="width: 100%;">
+                {% if listing.status == 'sold' %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Reactivate Ad (Mark Active)</span>
+                {% else %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Mark as Sold</span>
+                {% endif %}
+              </button>
+            </form>
+
+            <button type="button" class="btn btn-danger btn-sm" data-modal-target="deleteModal" style="margin-top: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Delete Ad</span>
+            </button>
+
+          {% else %}
+            <!-- Buyer Actions -->
+            {% if user.is_authenticated %}
+              <button type="button" class="btn btn-primary btn-lg" data-modal-target="messageModal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span>Chat with Seller</span>
+              </button>
+
+              <button type="button" class="btn btn-accent btn-lg" data-modal-target="offerModal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <span>{% if existing_offer %}Update My Offer{% else %}Make an Offer{% endif %}</span>
+              </button>
+
+            {% else %}
+              <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary btn-lg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                <span>Log In to Contact Seller</span>
+              </a>
+              <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-lg">
+                <span>Log In to Make an Offer</span>
+              </a>
+            {% endif %}
+
+            <!-- Phone Reveal -->
+            <div class="phone-reveal-box">
+              <span id="phoneSecret" style="display: none; font-size: 1.1rem; color: var(--primary);">
+                📞 {{ listing.contact_phone }}
+              </span>
+              <button type="button" id="phoneRevealBtn" class="btn btn-outline" style="width: 100%; border: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <span>Show Phone Number</span>
+              </button>
+            </div>
+
+            <!-- Report button -->
+            {% if user.is_authenticated %}
+              <div style="text-align: center; margin-top: 0.5rem;">
+                <button type="button" class="btn-sm" data-modal-target="reportModal" style="color: var(--text-muted); font-size: 0.8rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                  <span>Report this advertisement</span>
+                </button>
+              </div>
+            {% endif %}
+
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Seller Profile Card -->
+      <div class="seller-box">
+        <div class="seller-profile-row">
+          <div class="seller-avatar-large">
+            {% if listing.seller.profile.avatar_url %}
+              <img src="{{ listing.seller.profile.avatar_url }}" alt="{{ listing.seller.username }}">
+            {% else %}
+              {{ listing.seller.username|make_list|first|upper }}
+            {% endif %}
+          </div>
+          <div class="seller-info-details">
+            <h4>{{ listing.seller.username }}</h4>
+            <p>Member since {{ listing.seller.date_joined|date:"M Y" }}</p>
+            <p>{{ listing.seller.profile.location|default:"Local Seller" }}</p>
+          </div>
+        </div>
+
+        <a href="{% url 'public_profile' listing.seller.username %}" class="btn btn-outline" style="width: 100%;">
+          View All Ads by this Seller &rarr;
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Related Listings Section -->
+  {% if related_listings %}
+    <div style="margin-top: 3.5rem; margin-bottom: 2rem;">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Similar Listings</h2>
+          <p class="section-subtitle">More items from the {{ listing.category.name }} category</p>
+        </div>
+      </div>
+
+      <div class="product-grid">
+        {% for item in related_listings %}
+          <div class="product-card">
+            <div class="card-img-wrap">
+              {% if item.primary_image_url %}
+                <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="card-img" loading="lazy">
+              {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#64748b;">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+              {% endif %}
+              <span class="badge badge-primary card-badge-top-left">{{ item.get_condition_display }}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-price-row">
+                <span class="card-price">{{ item.formatted_price }}</span>
+              </div>
+              <h3 class="card-title">
+                <a href="{% url 'product_detail' item.id %}">{{ item.title }}</a>
+              </h3>
+              <div class="card-meta">
+                <span class="card-location">{{ item.location }}</span>
+                <span class="card-date">{{ item.created_at|timesince }} ago</span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODALS -->
+<!-- ========================================================================= -->
+
+<!-- 1. Contact Seller Modal -->
+{% if user.is_authenticated and not is_owner %}
+<div class="modal-backdrop" id="messageModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Message {{ listing.seller.username }}</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{% url 'start_conversation' listing.id %}" method="POST">
+      {% csrf_token %}
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Inquiring about: <strong>{{ listing.title }}</strong> ({{ listing.formatted_price }})
+        </p>
+        <div class="form-group">
+          <label for="msgContent">Your Message:</label>
+          <textarea name="content" id="msgContent" class="form-control" rows="4" required placeholder="Hi, is this item still available? Where can we meet for pick up?"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Make an Offer Modal -->
+<div class="modal-backdrop" id="offerModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Make an Offer</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{% url 'make_offer' listing.id %}" method="POST">
+      {% csrf_token %}
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Listing Asking Price: <strong style="color: var(--text-main);">{{ listing.formatted_price }}</strong>
+        </p>
+        <div class="form-group">
+          <label for="id_offered_price">Your Offered Price ($):</label>
+          <input type="number" name="offered_price" id="id_offered_price" class="form-control" step="1" min="1" required
+                 value="{% if existing_offer %}{{ existing_offer.offered_price }}{% else %}{{ listing.price }}{% endif %}">
+        </div>
+        <div class="form-group">
+          <label for="id_offer_message">Note to Seller (Optional):</label>
+          <textarea name="message" id="id_offer_message" class="form-control" rows="3" placeholder="e.g. Can pick up today with cash payment.">{% if existing_offer %}{{ existing_offer.message }}{% endif %}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Submit Offer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. Report Listing Modal -->
+<div class="modal-backdrop" id="reportModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Report this Advertisement</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <form action="{% url 'report_listing' listing.id %}" method="POST">
+      {% csrf_token %}
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Help us keep MarketNest safe. Our moderation team reviews every reported advertisement.
+        </p>
+        <div class="form-group">
+          <label for="id_report_reason">Reason for Reporting:</label>
+          <select name="reason" id="id_report_reason" class="form-control" required>
+            <option value="spam">Spam / Misleading Ad</option>
+            <option value="counterfeit">Counterfeit / Fraudulent Item</option>
+            <option value="inappropriate">Inappropriate or Prohibited Content</option>
+            <option value="offensive">Offensive Language or Hate Speech</option>
+            <option value="wrong_category">Incorrect Category or Details</option>
+            <option value="other">Other Reason</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="id_report_description">Additional Details:</label>
+          <textarea name="description" id="id_report_description" class="form-control" rows="3" placeholder="Explain the issue with this listing..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-danger">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- 4. Delete Confirmation Modal (Owner Only) -->
+{% if is_owner %}
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 style="color: var(--danger);">Delete Listing?</h3>
+      <button type="button" class="modal-close-btn" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 0.95rem; color: var(--text-main);">
+        Are you sure you want to permanently delete <strong>"{{ listing.title }}"</strong>?
+      </p>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+        This action cannot be undone. All images and inquiries associated with this ad will be removed.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+      <form action="{% url 'delete_listing' listing.id %}" method="POST" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Permanently Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

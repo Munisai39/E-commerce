@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if query %}
+    "{{ query }}" - Search Results | MarketNest
+  {% elif selected_category %}
+    {{ selected_category.name }} - Classifieds | MarketNest
+  {% else %}
+    Browse All Listings | MarketNest
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <!-- Breadcrumbs & Heading -->
+  <div style="margin-bottom: 1.5rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+      <a href="{% url 'home' %}">Home</a> &rsaquo;
+      <span>Browse</span>
+      {% if selected_category %}
+        &rsaquo; <strong>{{ selected_category.name }}</strong>
+      {% endif %}
+    </div>
+    <h1 style="font-size: 1.85rem;">
+      {% if query %}
+        Search Results for <span style="color: var(--primary);">"{{ query }}"</span>
+      {% elif selected_category %}
+        {{ selected_category.name }}
+      {% else %}
+        All Classified Listings
+      {% endif %}
+    </h1>
+  </div>
+
+  <div class="browse-layout">
+
+    <!-- Filters Sidebar -->
+    <aside class="filter-sidebar">
+      <div class="filter-header">
+        <h3>Filters</h3>
+        <a href="{% url 'browse' %}" style="font-size: 0.825rem; color: var(--primary);">Clear All</a>
+      </div>
+
+      <form action="{% url 'browse' %}" method="GET" id="browseFilterForm">
+        <!-- Search Keyword -->
+        <div class="filter-group">
+          <label class="filter-label" for="filterSearch">Search Keyword</label>
+          <input type="text" name="q" id="filterSearch" class="filter-input" placeholder="e.g. iPhone, Sofa" value="{{ query }}">
+        </div>
+
+        <!-- Category -->
+        <div class="filter-group">
+          <label class="filter-label" for="filterCategory">Category</label>
+          <select name="category" id="filterCategory" class="filter-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.slug }}" {% if category_slug == cat.slug %}selected{% endif %}>
+                {{ cat.name }} ({{ cat.active_count }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Subcategory (if subcategories exist) -->
+        {% if subcategories %}
+        <div class="filter-group">
+          <label class="filter-label" for="filterSubcategory">Subcategory</label>
+          <select name="subcategory" id="filterSubcategory" class="filter-select">
+            <option value="">All Subcategories</option>
+            {% for sub in subcategories %}
+              <option value="{{ sub.id }}" {% if subcategory_id == sub.id|stringformat:"s" %}selected{% endif %}>
+                {{ sub.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label" for="filterLocation">Location</label>
+          <input type="text" name="location" id="filterLocation" class="filter-input" placeholder="City or Area" value="{{ location }}">
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range ($)</label>
+          <div class="price-inputs">
+            <input type="number" name="min_price" class="filter-input" placeholder="Min $" value="{{ min_price }}" min="0">
+            <span class="price-divider">-</span>
+            <input type="number" name="max_price" class="filter-input" placeholder="Max $" value="{{ max_price }}" min="0">
+          </div>
+        </div>
+
+        <!-- Condition -->
+        <div class="filter-group">
+          <label class="filter-label" for="filterCondition">Condition</label>
+          <select name="condition" id="filterCondition" class="filter-select">
+            <option value="">Any Condition</option>
+            {% for val, label in condition_choices %}
+              <option value="{{ val }}" {% if condition == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Hidden Sort (Preserves sort order) -->
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Apply Filters
+        </button>
+      </form>
+    </aside>
+
+    <!-- Main Results Section -->
+    <main>
+      <!-- Results Bar -->
+      <div class="browse-results-bar">
+        <div class="results-count">
+          Showing <strong>{{ listings|length }}</strong> of <strong>{{ total_results }}</strong> listings
+        </div>
+
+        <div class="sort-wrapper">
+          <label for="sortSelector" style="color: var(--text-muted);">Sort By:</label>
+          <select id="sortSelector" class="filter-select" style="width: auto; padding: 0.4rem 0.75rem;" onchange="updateSort(this.value)">
+            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+            <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+            <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Active Filters Display -->
+      {% if query or category_slug or condition or location or min_price or max_price %}
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+          <span style="font-size: 0.85rem; color: var(--text-muted); align-self: center;">Active Filters:</span>
+          {% if query %}
+            <span class="badge badge-neutral">Keyword: {{ query }}</span>
+          {% endif %}
+          {% if selected_category %}
+            <span class="badge badge-neutral">Category: {{ selected_category.name }}</span>
+          {% endif %}
+          {% if location %}
+            <span class="badge badge-neutral">Location: {{ location }}</span>
+          {% endif %}
+          {% if condition %}
+            <span class="badge badge-neutral">Condition: {{ condition|title }}</span>
+          {% endif %}
+          {% if min_price %}
+            <span class="badge badge-neutral">Min: ${{ min_price }}</span>
+          {% endif %}
+          {% if max_price %}
+            <span class="badge badge-neutral">Max: ${{ max_price }}</span>
+          {% endif %}
+          <a href="{% url 'browse' %}" style="font-size: 0.8rem; color: var(--danger); align-self: center; margin-left: 0.5rem;">Reset Filters</a>
+        </div>
+      {% endif %}
+
+      <!-- Products Grid -->
+      <div class="product-grid">
+        {% for item in listings %}
+          <div class="product-card">
+            <div class="card-img-wrap">
+              {% if item.primary_image_url %}
+                <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="card-img" loading="lazy">
+              {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#64748b;">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+              {% endif %}
+
+              <span class="badge badge-primary card-badge-top-left">
+                {{ item.get_condition_display }}
+              </span>
+
+              {% if user.is_authenticated %}
+                <button type="button" class="card-fav-btn {% if item.id in user_favorites %}active{% endif %}"
+                        data-listing-id="{{ item.id }}"
+                        data-url="{% url 'toggle_favorite' item.id %}"
+                        title="Save to favorites">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+              {% else %}
+                <a href="{% url 'login' %}?next={{ request.get_full_path }}" class="card-fav-btn" title="Log in to favorite">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </a>
+              {% endif %}
+            </div>
+
+            <div class="card-body">
+              <div class="card-price-row">
+                <span class="card-price">{{ item.formatted_price }}</span>
+                <span class="badge badge-neutral" style="font-size: 0.7rem;">{{ item.category.name }}</span>
+              </div>
+
+              <h3 class="card-title">
+                <a href="{% url 'product_detail' item.id %}">{{ item.title }}</a>
+              </h3>
+
+              <div class="card-meta">
+                <span class="card-location">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {{ item.location }}
+                </span>
+                <span class="card-date">{{ item.created_at|timesince }} ago</span>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon-box">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h3>No Listings Found</h3>
+            <p>We couldn't find any products matching your current search criteria. Try adjusting your filters or search keywords.</p>
+            <a href="{% url 'browse' %}" class="btn btn-outline-primary">View All Available Ads</a>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination Controls (Preserves GET parameters) -->
+      {% if page_obj.has_other_pages %}
+        <div class="pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&category={{ category_slug }}&subcategory={{ subcategory_id }}&location={{ location }}&condition={{ condition }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}" class="page-link" aria-label="Previous">&laquo;</a>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <a href="?page={{ num }}&q={{ query }}&category={{ category_slug }}&subcategory={{ subcategory_id }}&location={{ location }}&condition={{ condition }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}" class="page-link">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&category={{ category_slug }}&subcategory={{ subcategory_id }}&location={{ location }}&condition={{ condition }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}" class="page-link" aria-label="Next">&raquo;</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    </main>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateSort(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', val);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+  }
+</script>
+{% endblock %}

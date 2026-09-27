@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages & Inquiries - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <div style="margin-bottom: 1.5rem;">
+    <h1 class="section-title">Messages</h1>
+    <p class="section-subtitle">Chat securely with buyers and sellers about your advertisements</p>
+  </div>
+
+  <div class="messages-layout">
+
+    <!-- Conversations Sidebar -->
+    <div class="conversations-sidebar">
+      <div class="conversations-header">
+        <h3>Conversations ({{ conversations|length }})</h3>
+      </div>
+
+      <div class="conversations-list">
+        {% for convo in conversations %}
+          <a href="{% url 'conversation_detail' convo.id %}" class="conversation-item {% if active_conversation and active_conversation.id == convo.id %}active{% endif %}">
+            <div class="convo-avatar">
+              {% if convo.other_user.profile.avatar_url %}
+                <img src="{{ convo.other_user.profile.avatar_url }}" alt="{{ convo.other_user.username }}">
+              {% else %}
+                {{ convo.other_user.username|make_list|first|upper }}
+              {% endif %}
+            </div>
+
+            <div class="convo-info">
+              <div class="convo-name-row">
+                <span class="convo-name">{{ convo.other_user.username }}</span>
+                <span class="convo-time">{{ convo.updated_at|date:"M d" }}</span>
+              </div>
+              <div class="convo-listing">{{ convo.listing.title|truncatechars:28 }}</div>
+              <div class="convo-last-msg">
+                {% if convo.latest_message %}
+                  {{ convo.latest_message.content|truncatechars:32 }}
+                {% else %}
+                  New conversation started
+                {% endif %}
+              </div>
+            </div>
+
+            {% if convo.unread_count > 0 %}
+              <div style="align-self: center;">
+                <span class="badge badge-danger" style="font-size: 0.65rem; border-radius: 9999px; padding: 2px 6px;">{{ convo.unread_count }}</span>
+              </div>
+            {% endif %}
+          </a>
+        {% empty %}
+          <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 0.5rem auto;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <p style="font-size: 0.9rem;">No active chats yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Chat Active Window -->
+    <div class="chat-window">
+      {% if active_conversation %}
+        <!-- Header -->
+        <div class="chat-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="avatar-circle">
+              {% if other_user.profile.avatar_url %}
+                <img src="{{ other_user.profile.avatar_url }}" alt="{{ other_user.username }}">
+              {% else %}
+                {{ other_user.username|make_list|first|upper }}
+              {% endif %}
+            </div>
+            <div>
+              <div style="font-weight: 700; color: var(--text-main);">{{ other_user.username }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">{{ other_user.profile.location|default:"Local Member" }}</div>
+            </div>
+          </div>
+          <a href="{% url 'public_profile' other_user.username %}" class="btn btn-outline btn-sm">View Profile</a>
+        </div>
+
+        <!-- Listing Banner -->
+        <div class="chat-listing-banner">
+          {% if active_conversation.listing.primary_image_url %}
+            <img src="{{ active_conversation.listing.primary_image_url }}" alt="Item" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover;">
+          {% endif %}
+          <div style="flex: 1; min-width: 0;">
+            <a href="{% url 'product_detail' active_conversation.listing.id %}" style="font-weight: 700; color: var(--text-main);">
+              {{ active_conversation.listing.title }}
+            </a>
+            <span style="color: var(--primary); font-weight: 800; margin-left: 0.5rem;">
+              {{ active_conversation.listing.formatted_price }}
+            </span>
+          </div>
+          <a href="{% url 'product_detail' active_conversation.listing.id %}" class="btn btn-outline btn-sm" style="background:#fff;">View Ad</a>
+        </div>
+
+        <!-- Messages History -->
+        <div class="chat-messages-body" id="chatMessagesBody">
+          {% for msg in messages_list %}
+            <div class="message-bubble {% if msg.sender == user %}message-sent{% else %}message-received{% endif %}">
+              <div>{{ msg.content|linebreaksbr }}</div>
+              <div class="message-meta">{{ msg.created_at|date:"M d, g:i a" }}</div>
+            </div>
+          {% empty %}
+            <p style="text-align: center; color: var(--text-muted); margin: auto;">No messages in this chat yet. Say hello!</p>
+          {% endfor %}
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar">
+          <form method="POST" class="chat-form">
+            {% csrf_token %}
+            <textarea name="content" class="form-control" placeholder="Type a message to {{ other_user.username }}..." required></textarea>
+            <button type="submit" class="btn btn-primary" style="height: 2.75rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <span>Send</span>
+            </button>
+          </form>
+        </div>
+
+      {% else %}
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); padding: 2rem; text-align: center;">
+          <div class="empty-icon-box" style="margin-bottom: 1rem;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">Select a Conversation</h3>
+          <p style="max-width: 360px; font-size: 0.9rem;">Choose a conversation from the left sidebar to read inquiries, discuss item condition, or coordinate local meetup.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-scroll chat to bottom
+  const chatBody = document.getElementById('chatMessagesBody');
+  if (chatBody) {
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+</script>
+{% endblock %}

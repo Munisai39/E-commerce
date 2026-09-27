@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Server Error (500) - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 5rem 1.5rem; text-align: center;">
+  <div style="font-size: 5rem; font-weight: 900; line-height: 1; color: var(--warning); letter-spacing: -0.05em; margin-bottom: 1rem;">
+    500
+  </div>
+  <h1 style="font-size: 2rem; margin-bottom: 0.75rem;">Internal Server Error</h1>
+  <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 2rem auto; font-size: 1.05rem;">
+    Oops! Something unexpected happened on our server. Please try refreshing the page or check back in a few minutes.
+  </p>
+  <div style="display: flex; gap: 1rem; justify-content: center;">
+    <a href="{% url 'home' %}" class="btn btn-primary">Return to Homepage</a>
+  </div>
+</div>
+{% endblock %}

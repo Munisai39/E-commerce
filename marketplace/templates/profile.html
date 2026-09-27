@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile Settings - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Account Profile</h1>
+      <p class="section-subtitle">Manage your personal details, seller contact info, and view account stats</p>
+    </div>
+    <a href="{% url 'public_profile' user.username %}" class="btn btn-outline" target="_blank">
+      <span>View Public Profile</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+
+  <!-- Stats Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Ads</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary);">{{ stats.total_listings }}</div>
+    </div>
+    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Active Listings</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: var(--accent);">{{ stats.active_listings }}</div>
+    </div>
+    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Items Sold</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: var(--dark);">{{ stats.sold_listings }}</div>
+    </div>
+    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Saved Wishlist</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: var(--danger);">{{ stats.favorites_count }}</div>
+    </div>
+  </div>
+
+  <div class="form-card form-card-wide" style="margin: 0 auto;">
+    <div class="form-card-header" style="text-align: left; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+      <h3>Profile Information</h3>
+      <p>Member since {{ user.date_joined|date:"F d, Y" }}</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+      {% csrf_token %}
+
+      <!-- Avatar display & upload -->
+      <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+        <div class="avatar-circle" style="width: 5rem; height: 5rem; font-size: 2rem;">
+          {% if profile.avatar_url %}
+            <img src="{{ profile.avatar_url }}" alt="{{ user.username }}">
+          {% else %}
+            {{ user.username|make_list|first|upper }}
+          {% endif %}
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">Profile Picture</label>
+          <input type="file" name="avatar" class="form-control" accept="image/*">
+          <div class="form-hint">JPG, PNG or WEBP. Max size 2MB.</div>
+        </div>
+      </div>
+
+      <!-- Username & Email (Username readonly) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" class="form-control" value="{{ user.username }}" disabled style="background: var(--bg-subtle);">
+          <div class="form-hint">Username cannot be changed.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_email">Email Address *</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="form-error-msg">{{ form.email.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- First & Last Name -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_first_name">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label for="id_last_name">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <!-- Phone & Location -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_phone">Phone Number</label>
+          {{ form.phone }}
+          <div class="form-hint">Shown to buyers when they click "Show Phone Number" on your listings.</div>
+        </div>
+        <div class="form-group">
+          <label for="id_location">Primary Location / City</label>
+          {{ form.location }}
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group">
+        <label for="id_bio">About You (Bio)</label>
+        {{ form.bio }}
+        <div class="form-hint">Brief intro displayed on your public seller profile.</div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary btn-lg">Save Profile Changes</button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

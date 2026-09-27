@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Access Denied (403) - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 5rem 1.5rem; text-align: center;">
+  <div style="font-size: 5rem; font-weight: 900; line-height: 1; color: var(--danger); letter-spacing: -0.05em; margin-bottom: 1rem;">
+    403
+  </div>
+  <h1 style="font-size: 2rem; margin-bottom: 0.75rem;">Access Denied</h1>
+  <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 2rem auto; font-size: 1.05rem;">
+    You do not have permission to modify this advertisement or access this conversation.
+  </p>
+  <div style="display: flex; gap: 1rem; justify-content: center;">
+    <a href="{% url 'home' %}" class="btn btn-primary">Return to Marketplace</a>
+    <a href="{% url 'my_listings' %}" class="btn btn-outline">My Listings</a>
+  </div>
+</div>
+{% endblock %}

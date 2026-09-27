@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ seller.username }}'s Store & Listings - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem;">
+
+  <!-- Seller Hero Card -->
+  <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+    <div class="avatar-circle" style="width: 5.5rem; height: 5.5rem; font-size: 2.25rem;">
+      {% if seller.profile.avatar_url %}
+        <img src="{{ seller.profile.avatar_url }}" alt="{{ seller.username }}">
+      {% else %}
+        {{ seller.username|make_list|first|upper }}
+      {% endif %}
+    </div>
+
+    <div style="flex: 1; min-width: 260px;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+        <h1 style="font-size: 1.75rem; margin-bottom: 0;">{{ seller.username }}</h1>
+        <span class="badge badge-success">Verified Seller</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
+        Member since {{ seller.date_joined|date:"F Y" }} &bull; {{ seller.profile.location|default:"Local Member" }}
+      </p>
+      {% if seller.profile.bio %}
+        <p style="font-size: 0.925rem; color: var(--text-body); max-width: 600px;">
+          {{ seller.profile.bio }}
+        </p>
+      {% endif %}
+    </div>
+
+    <div>
+      <div style="background: var(--bg-subtle); padding: 1rem 1.5rem; border-radius: var(--radius-lg); text-align: center;">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ total_active }}</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Ads</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seller's Listings -->
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">Listings by {{ seller.username }}</h2>
+      <p class="section-subtitle">All currently active advertisements from this seller</p>
+    </div>
+  </div>
+
+  <div class="product-grid">
+    {% for item in seller_listings %}
+      <div class="product-card">
+        <div class="card-img-wrap">
+          {% if item.primary_image_url %}
+            <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="card-img" loading="lazy">
+          {% else %}
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#64748b;">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+          {% endif %}
+          <span class="badge badge-primary card-badge-top-left">{{ item.get_condition_display }}</span>
+        </div>
+
+        <div class="card-body">
+          <div class="card-price-row">
+            <span class="card-price">{{ item.formatted_price }}</span>
+            <span class="badge badge-neutral" style="font-size: 0.7rem;">{{ item.category.name }}</span>
+          </div>
+
+          <h3 class="card-title">
+            <a href="{% url 'product_detail' item.id %}">{{ item.title }}</a>
+          </h3>
+
+          <div class="card-meta">
+            <span class="card-location">{{ item.location }}</span>
+            <span class="card-date">{{ item.created_at|timesince }} ago</span>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <h3>No Active Listings</h3>
+        <p>{{ seller.username }} currently has no active advertisements listed.</p>
+        <a href="{% url 'browse' %}" class="btn btn-outline-primary">Browse Other Sellers</a>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

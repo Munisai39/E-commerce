@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Price Offers - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Price Offers</h1>
+      <p class="section-subtitle">Review bargaining offers received on your ads and track offers you made to other sellers</p>
+    </div>
+  </div>
+
+  <!-- Section 1: Offers Received (As Seller) -->
+  <div style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.35rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+      <span>Offers Received on Your Items ({{ received_offers|length }})</span>
+    </h2>
+
+    {% if received_offers %}
+      <div class="offers-table-wrap">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Advertisement</th>
+              <th>Buyer</th>
+              <th>Asking Price</th>
+              <th>Offered Price</th>
+              <th>Buyer Note</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for offer in received_offers %}
+              <tr>
+                <td>
+                  <div class="table-listing-item">
+                    {% if offer.listing.primary_image_url %}
+                      <img src="{{ offer.listing.primary_image_url }}" alt="item" class="table-listing-thumb">
+                    {% endif %}
+                    <a href="{% url 'product_detail' offer.listing.id %}" style="font-weight: 700; color: var(--text-main);">
+                      {{ offer.listing.title }}
+                    </a>
+                  </div>
+                </td>
+                <td>
+                  <a href="{% url 'public_profile' offer.buyer.username %}" style="font-weight: 600;">
+                    {{ offer.buyer.username }}
+                  </a>
+                </td>
+                <td>{{ offer.listing.formatted_price }}</td>
+                <td style="font-weight: 800; color: var(--primary); font-size: 1.05rem;">
+                  ${{ offer.offered_price|floatformat:2 }}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted); max-width: 220px;">
+                  {{ offer.message|default:"-" }}
+                </td>
+                <td>
+                  {% if offer.status == 'accepted' %}
+                    <span class="badge badge-success">Accepted</span>
+                  {% elif offer.status == 'rejected' %}
+                    <span class="badge badge-danger">Rejected</span>
+                  {% else %}
+                    <span class="badge badge-warning">Pending</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: right;">
+                  {% if offer.status == 'pending' %}
+                    <div style="display: inline-flex; gap: 0.4rem;">
+                      <form action="{% url 'offer_action' offer.id 'accept' %}" method="POST" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-accent btn-sm">Accept</button>
+                      </form>
+                      <form action="{% url 'offer_action' offer.id 'reject' %}" method="POST" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline btn-sm">Reject</button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Resolved</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+        You haven't received any buyer price offers yet.
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Section 2: Offers Made (As Buyer) -->
+  <div>
+    <h2 style="font-size: 1.35rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      <span>Offers You Made ({{ sent_offers|length }})</span>
+    </h2>
+
+    {% if sent_offers %}
+      <div class="offers-table-wrap">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Advertisement</th>
+              <th>Seller</th>
+              <th>Asking Price</th>
+              <th>Your Offer</th>
+              <th>Your Message</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for offer in sent_offers %}
+              <tr>
+                <td>
+                  <div class="table-listing-item">
+                    {% if offer.listing.primary_image_url %}
+                      <img src="{{ offer.listing.primary_image_url }}" alt="item" class="table-listing-thumb">
+                    {% endif %}
+                    <a href="{% url 'product_detail' offer.listing.id %}" style="font-weight: 700; color: var(--text-main);">
+                      {{ offer.listing.title }}
+                    </a>
+                  </div>
+                </td>
+                <td>
+                  <a href="{% url 'public_profile' offer.seller.username %}" style="font-weight: 600;">
+                    {{ offer.seller.username }}
+                  </a>
+                </td>
+                <td>{{ offer.listing.formatted_price }}</td>
+                <td style="font-weight: 800; color: var(--primary); font-size: 1.05rem;">
+                  ${{ offer.offered_price|floatformat:2 }}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted); max-width: 220px;">
+                  {{ offer.message|default:"-" }}
+                </td>
+                <td>
+                  {% if offer.status == 'accepted' %}
+                    <span class="badge badge-success">Accepted by Seller</span>
+                  {% elif offer.status == 'rejected' %}
+                    <span class="badge badge-danger">Rejected</span>
+                  {% else %}
+                    <span class="badge badge-warning">Awaiting Seller</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ offer.created_at|date:"M d, Y" }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+        You haven't submitted price offers on any listings yet.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

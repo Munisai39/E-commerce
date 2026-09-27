@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Post an Ad for Free - MarketNest{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+  <div class="form-card form-card-wide">
+    <div class="form-card-header">
+      <h2>Post an Advertisement</h2>
+      <p>Fill out the details below to publish your item to thousands of local buyers on MarketNest.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="createListingForm">
+      {% csrf_token %}
+
+      <!-- Error summary if any -->
+      {% if form.non_field_errors %}
+        <div style="background-color: var(--danger-light); color: var(--danger); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-size: 0.9rem;">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Title -->
+      <div class="form-group">
+        <label for="{{ form.title.id_for_label }}">Listing Title *</label>
+        {{ form.title }}
+        {% if form.title.errors %}
+          <div class="form-error-msg">{{ form.title.errors.0 }}</div>
+        {% endif %}
+        <div class="form-hint">A clear title helps buyers find your ad easily (e.g., brand, model, color, specifications).</div>
+      </div>
+
+      <!-- Category & Subcategory Row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_category">Category *</label>
+          {{ form.category }}
+          {% if form.category.errors %}
+            <div class="form-error-msg">{{ form.category.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_subcategory">Subcategory (Optional)</label>
+          {{ form.subcategory }}
+          {% if form.subcategory.errors %}
+            <div class="form-error-msg">{{ form.subcategory.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Condition & Price Row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="{{ form.condition.id_for_label }}">Item Condition *</label>
+          {{ form.condition }}
+          {% if form.condition.errors %}
+            <div class="form-error-msg">{{ form.condition.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.price.id_for_label }}">Price ($) *</label>
+          {{ form.price }}
+          {% if form.price.errors %}
+            <div class="form-error-msg">{{ form.price.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Location & Phone Row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="{{ form.location.id_for_label }}">Location / City *</label>
+          {{ form.location }}
+          {% if form.location.errors %}
+            <div class="form-error-msg">{{ form.location.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.contact_phone.id_for_label }}">Contact Phone Number *</label>
+          {{ form.contact_phone }}
+          {% if form.contact_phone.errors %}
+            <div class="form-error-msg">{{ form.contact_phone.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="{{ form.description.id_for_label }}">Detailed Description *</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="form-error-msg">{{ form.description.errors.0 }}</div>
+        {% endif %}
+        <div class="form-hint">Mention reasons for sale, usage period, package contents, warranty, and any defects.</div>
+      </div>
+
+      <!-- Photos Upload Dropzone -->
+      <div class="form-group">
+        <label>Product Photos</label>
+        <div class="image-upload-zone" onclick="document.getElementById('id_listing_images').click();">
+          <div class="upload-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+              <line x1="16" y1="5" x2="22" y2="5"></line>
+              <line x1="19" y1="2" x2="19" y2="8"></line>
+              <circle cx="9" cy="9" r="2"></circle>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+            </svg>
+          </div>
+          <div style="font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem;">
+            Click to select or drag and drop photos here
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Upload up to 8 images (JPG, PNG, WEBP). First image becomes primary display image.
+          </div>
+          <input type="file" name="images" id="id_listing_images" multiple accept="image/*" style="display: none;">
+        </div>
+
+        <!-- Preview Grid -->
+        <div class="image-previews-grid" id="imagePreviews"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+        <a href="{% url 'home' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-accent btn-lg">Publish Listing</button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}
