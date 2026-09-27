@@ -125,11 +125,6 @@ marketnest/
 ## 🚀 Installation & Setup Guide
 
 ### 1. Clone or Open the Project
-Open terminal in the project directory:
-```bash
-cd Antigravity_DEMO
-```
-
 ### 2. Create and Activate Virtual Environment (Recommended)
 **Windows (PowerShell):**
 ```powershell
